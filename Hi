@@ -1,0 +1,54 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Box, Typography, useTheme } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import { tokens } from "../../theme";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import Header from "../../components/Header";
+
+const Manage = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  // Step 2: Create state variable to store data
+  const [expenseData, setExpenseData] = useState([]);
+
+  const columns = [
+    // Define your columns here...
+  ];
+
+  // Step 3: Use useEffect to fetch data when the component mounts
+  useEffect(() => {
+    // Define an async function to fetch the data using Axios
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("your_api_endpoint_here");
+        setExpenseData(response.data); // Set the fetched data into the state variable
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData(); // Call the fetchData function when the component mounts
+  }, []); // The empty array [] ensures this effect runs only once, like componentDidMount
+
+  return (
+    <Box m="20px">
+      <Header title="Manage Expenses" subtitle="Approve or Reject the Expense records" />
+      <Box
+        m="40px 0 0 0"
+        height="75vh"
+        sx={{
+          // Your CSS styles...
+        }}
+      >
+        {/* Step 4: Replace rows prop with expenseData */}
+        <DataGrid checkboxSelection rows={expenseData} columns={columns} />
+      </Box>
+    </Box>
+  );
+};
+
+export default Manage;
