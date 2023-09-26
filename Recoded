@@ -1,0 +1,62 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+// ... (other imports)
+
+export default function Manage() {
+  // ... (other code)
+
+  // State to store the photo data for the selected expense item
+  const [photoData, setPhotoData] = useState(null);
+  const [photoError, setPhotoError] = useState(null); // New state for handling errors
+
+  // ... (other code)
+
+  const handleRowClick = async (row) => {
+    if (row.status === "PENDING") {
+      setOpenDialog(true);
+      setSelectedExpenseId(row.expid);
+
+      try {
+        // Make an Axios request to retrieve the photo data based on expense ID
+        const response = await axios.get(`http://localhost:9005/employee/getFile?expid=${row.expid}`);
+        
+        // Assuming the response contains binary image data
+        setPhotoData(response.data);
+        setPhotoError(null); // Clear any previous errors
+
+      } catch (error) {
+        console.error('Error fetching photo data:', error);
+        setPhotoError('Error fetching photo data'); // Set an error message
+        setPhotoData(null); // Clear any previous photo data
+      }
+    }
+  };
+
+  // ... (other code)
+
+  return (
+    <div>
+      {/* ... (other JSX) */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogContent>
+          {/* Display the photo if photoData is available */}
+          {photoError ? (
+            <p>{photoError}</p> // Display error message
+          ) : photoData ? (
+            <img src={`data:image/png;base64,${photoData}`} alt="Receipt" style={{ maxWidth: '100%' }} />
+          ) : (
+            <p>Loading...</p> // Display loading message while fetching
+          )}
+
+          <FormControl component="fieldset">
+            {/* ... (other JSX) */}
+          </FormControl>
+        </DialogContent>
+
+        <DialogActions>
+          {/* ... (other JSX) */}
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
