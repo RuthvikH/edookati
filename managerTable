@@ -1,0 +1,321 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+// import { Box } from '@mui/material';
+import { Box, useTheme,Typography, TextField } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import { tokens } from "../../theme";
+
+// import { expenses } from "../../data/mockData";
+// import { tokens } from "../../theme";
+// import { DataGrid } from '@mui/x-data-grid';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+// import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import FormControl from '@mui/material/FormControl';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+// import { expenses } from '../../data/mockData';
+import  MenuItem  from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../Authcontext';
+
+import useMediaQuery from "@mui/material/useMediaQuery";
+// import SelectVariants from '../../components/SelectVariants';
+
+export default function Manage() {
+  const navigate=useNavigate();
+  const{username, userId, isUserLoggedIn } = useAuth();
+  const [selectedExpenseId, setSelectedExpenseId] = useState("");
+useEffect(() => {
+
+
+if(!isUserLoggedIn)
+{
+navigate("/");
+}
+
+
+}, [isUserLoggedIn])
+  
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const isNonMobile = useMediaQuery("(min-width:600px)");
+  // const [data, setData] = useState([]);
+  // const [selectedRow, setSelectedRow] = useState(null);
+  const [approvalChoice, setApprovalChoice] = useState(''); // 'Approve' or 'Reject'
+  const [openDialog, setOpenDialog] = useState(false);
+  const [content,setContent] = useState("");
+  const [data,setData] = useState([]);
+
+  useEffect(() => {
+    axios.get("http://localhost:9004/manager/all")
+      .then(response => {
+        setData(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  const handleRowClick = (row) => {
+    // setSelectedRow(row);
+    if(row.status==="PENDING")
+    setOpenDialog(true);
+    setSelectedExpenseId(row.expid);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const handleApprovalChoiceChange = (event) => {
+    setApprovalChoice(event.target.value);
+  };
+  const handleContent = (event) =>{
+    setContent(event.target.value);
+  }
+
+  const handleFinalAction = () => {
+    if (approvalChoice === 'Approve') {
+      var formdata1=new FormData();
+      formdata1.append('managerComments',content)
+    
+      axios.put("http://localhost:9004/manager/approve/"+`${selectedExpenseId}`,formdata1)
+        .then(response => {
+          // Handle success
+          console.log('Request approved:', response.data);
+          // You can update the state here if needed
+        })
+        .catch(error => {
+          console.error('Error approving request:', error);
+        });
+    } else if (approvalChoice === 'Reject') {
+      // Send a reject request to your server using Axios
+      var formdata2=new FormData();
+      formdata2.append('managerComments','Rejected')
+
+      axios.put("http://localhost:9004/manager/reject/"+`${selectedExpenseId}`,formdata2)
+      
+        .then(response => {
+          // Handle success
+          console.log('Request rejected:', response.data);
+          // You can update the state here if needed
+        })
+        .catch(error => {
+          console.error('Error rejecting request:', error);
+        });
+    }
+    setOpenDialog(false);
+  };
+  const [filterType,setFilterType] = React.useState('All');
+  const[filterStatus,setFilterStatus]=React.useState('All');
+
+  const handleFilterStatus = (event) =>{
+    setFilterStatus(event.target.value);
+  }
+  const handleFilterType = (event) =>{
+    setFilterType(event.target.value);
+  }
+  const filteredData = data.filter(row => {
+    const statusFilter = filterStatus ==="All" || row.status ===filterStatus;
+    const typeFilter = filterType ==="All" || row.exptype1 ===filterType;
+    return statusFilter && typeFilter;
+  });
+
+  const columns = [
+    { field: 'expid', headerName: 'ID', flex:1 },
+    { field: 'exptype1', headerName: 'expenseType', flex:1},
+    { field: 'amount', headerName: 'amount', flex:1 },
+    { field: 'date_of_transaction', headerName: 'dateOfTransaction', flex:1 },
+    { field: 'comments', headerName: 'comments', flex:1},
+    {
+      field: "status",
+      headerName: "status",
+      flex: 1,
+      renderCell : ({row}) =>{
+        if(row.status==="PENDING"){
+          return(
+            <Button variant="contained"color="secondary" style={{color:"white"}}>Review</Button>
+          )
+        }
+        if(row.status !=="PENDING" ){
+          return (
+            <Box
+              width="100%"
+              m="0 auto"
+              p="2px"
+             // display="flex"
+              justifyContent="left"
+                color={
+               row.status === "REJECTED"
+                   ? colors.redAccent[600]
+                   : row.status === "APPROVED"
+                   ? colors.greenAccent[700]
+                  : colors.blueAccent[700]
+              }
+              
+              borderRadius="4px"
+            >
+              {row.status}
+            </Box>
+          );
+        }
+      }
+    },
+  ];
+
+  return (
+    <div><div>
+      
+<sdf-home-page-layout data-cvs-id="6" first-name={`${username}`} >
+    <sdf-box data-cvs-id="9" variant="clear" slot="user-card" spacing="none"></sdf-box>
+    </sdf-home-page-layout>
+    <Box
+              display="grid"
+              gridTemplateColumns="repeat(5, minmax(0, 1fr))"
+              sx={{
+                "& > div": { gridColumn: isNonMobile ? undefined : "span 3" },
+              }}
+            >
+
+    <div sx={{gridColumn:"span 3"}}>
+
+      <FormControl 
+      fullWidth
+      variant="filled" sx={{ maxWidth: 300 }} sp>
+        <InputLabel id="demo-simple-select-standard-label">Filter by type</InputLabel>
+        <Select
+          labelId="demo-simple-select-standard-label"
+          id="demo-simple-select-standard"
+          value={filterType}
+          onChange={handleFilterType}
+          label="Expense Type"
+        >
+          <MenuItem value="All">All</MenuItem>
+          <MenuItem value="transportation">Transportation</MenuItem>
+          <MenuItem value="communication">Communication</MenuItem>
+          <MenuItem value="medical">Medical</MenuItem>
+          <MenuItem value="relocation">Relocation</MenuItem>
+          <MenuItem value="Other">Other</MenuItem>
+        </Select>
+      </FormControl>
+      
+    </div>
+    <div>
+      <FormControl 
+      fullWidth
+      variant="filled" sx={{ maxWidth: 300 }}>
+        <InputLabel id="demo-simple-select-standard-label">Filter by status</InputLabel>
+        <Select
+          labelId="demo-simple-select-standard-label"
+          id="demo-simple-select-standard"
+          value={filterStatus}
+          onChange={handleFilterStatus}
+          label="Expense Type"
+        >
+        <MenuItem value="All">All</MenuItem>
+          <MenuItem value="PENDING">PENDING</MenuItem>
+          <MenuItem value="APPROVED">APPROVED</MenuItem>
+          <MenuItem value="REJECTED">REJECTED</MenuItem>
+        </Select>
+      </FormControl>
+      
+    </div>
+    </Box>
+    </div>
+    <div>
+      <Box
+        m="40px 0 0 0"
+        height="75vh"
+        sx={{
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.greenAccent[300],
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.blueAccent[700],
+            borderBottom: "none",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+          "& .MuiDataGrid-footerContainer": {
+            borderTop: "none",
+            backgroundColor: colors.blueAccent[700],
+          },
+          "& .MuiCheckbox-root": {
+            color: `${colors.greenAccent[200]} !important`,
+          },
+        }}
+      >
+        <DataGrid
+          rows={filteredData}
+          columns={columns}
+          pageSize={10}
+          getRowId={(row: any) =>  row.expid}
+          onRowClick={(params) => handleRowClick(params.row)}
+        />
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogContent>
+          <FormControl component="fieldset">
+            <RadioGroup
+              aria-label="approvalChoice"
+              name="approvalChoice"
+              value={approvalChoice}
+              onChange={handleApprovalChoiceChange}
+              display="grid"
+              gap="10px"
+              gridTemplateColumns="repeat(3, minmax(0, 1fr))"
+            
+            >
+              <FormControlLabel
+                value="Approve"
+                control={<Radio />}
+                label="Approve"
+                sx={{gridColumn:"span 1"}}
+              />
+              <FormControlLabel
+                value="Reject"
+                control={<Radio />}
+                label="Reject"
+                sx={{gridColumn:"span 1"}}
+              />
+            </RadioGroup>
+            <TextField
+                fullWidth
+                variant="filled"
+                type="content"
+                label="Comments"
+                rows={4}
+                value={content}
+                onChange={handleContent}
+
+              />
+          </FormControl>
+        </DialogContent>
+
+        <DialogActions>
+          
+          <Button onClick={handleCloseDialog} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleFinalAction} color="secondary">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+      </Box>
+    </div>
+    </div>
+  );
+}
