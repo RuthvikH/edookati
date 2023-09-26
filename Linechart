@@ -1,0 +1,85 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ResponsiveLine } from '@nivo/line';
+
+function ExpenseTracker() {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    // Make the Axios request to fetch specific columns (exptype1 and amount)
+    axios.get('/api/your-data-endpoint?columns=exptype1,amount')
+      .then(response => {
+        // Extracted data containing only "exptype1" and "amount"
+        const extractedData = response.data;
+
+        // Calculate cumulative spending for each category (exptype1)
+        const cumulativeData = extractedData.reduce((accumulator, item) => {
+          const existingCategory = accumulator.find(dataItem => dataItem.category === item.exptype1);
+          const amount = parseFloat(item.amount); // Convert to a numeric value
+          
+          if (existingCategory) {
+            existingCategory.amount += amount;
+          } else {
+            accumulator.push({ category: item.exptype1, amount });
+          }
+          return accumulator;
+        }, []);
+
+        // Transform data to fit the line chart format
+        const lineChartData = cumulativeData.map(item => ({
+          x: item.category,
+          y: item.amount,
+        }));
+
+        // Set the cumulative data in state
+        setData([{ id: 'amount', data: lineChartData }]);
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  return (
+    <div style={{ height: '400px' }}>
+      <ResponsiveLine
+        data={data}
+        margin={{ top: 50, right: 60, bottom: 50, left: 60 }}
+        xScale={{ type: 'point' }}
+        yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
+        axisBottom={{
+          orient: 'bottom',
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: 0,
+          legend: 'Categories',
+          legendOffset: 36,
+          legendPosition: 'middle',
+        }}
+        axisLeft={{
+          orient: 'left',
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: 0,
+          legend: 'Amount Spent',
+          legendOffset: -40,
+          legendPosition: 'middle',
+        }}
+        enableGridX={false}
+        enableGridY={true}
+        colors={{ scheme: 'nivo' }}
+        lineWidth={2}
+        enablePoints={true}
+        pointSize={6}
+        pointBorderWidth={2}
+        pointBorderColor={{ from: 'serieColor' }}
+        pointLabelYOffset={-12}
+        enableSlices="x"
+        animate={true}
+        motionStiffness={90}
+        motionDamping={15}
+      />
+    </div>
+  );
+}
+
+export default ExpenseTracker;
