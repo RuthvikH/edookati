@@ -1,0 +1,95 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { ResponsiveLine } from '@nivo/line';
+
+function ExpenseLineChart() {
+  const [expenseData, setExpenseData] = useState([]);
+
+  useEffect(() => {
+    const fetchExpenseDetails = async () => {
+      try {
+        const response = await axios.get('http://localhost:9004/manager/all');
+        const data = response.data;
+
+        // Process and format data to match the structure expected by Nivo Line chart
+        const formattedData = formatDataForLineChart(data);
+        setExpenseData(formattedData);
+      } catch (error) {
+        console.error('Error fetching expense details:', error);
+      }
+    };
+
+    fetchExpenseDetails();
+  }, []);
+
+  // Function to format data for Nivo Line chart
+  const formatDataForLineChart = (data) => {
+    // Create an array to hold data series for each empid
+    const series = {};
+
+    data.forEach((item) => {
+      const empid = item.empid;
+      const exptype = item.exptype;
+      const amount = item.amount;
+
+      // Create or update the series for each empid
+      if (!series[empid]) {
+        series[empid] = {
+          id: empid,
+          data: [],
+        };
+      }
+
+      // Add data point to the series
+      series[empid].data.push({ x: exptype, y: amount });
+    });
+
+    // Convert series object to an array of series
+    const formattedData = Object.values(series);
+
+    return formattedData;
+  };
+
+  return (
+    <div>
+      <h2>Employee Expense Trends</h2>
+      <div style={{ height: '400px' }}>
+        <ResponsiveLine
+          data={expenseData}
+          margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+          xScale={{ type: 'point' }}
+          yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}
+          axisBottom={{
+            orient: 'bottom',
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: 'Expense Type',
+            legendOffset: 36,
+            legendPosition: 'middle',
+          }}
+          axisLeft={{
+            orient: 'left',
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: 'Amount Spent',
+            legendOffset: -40,
+            legendPosition: 'middle',
+          }}
+          colors={{ scheme: 'category10' }}
+          enableGridX={false}
+          enableGridY={true}
+          lineWidth={3}
+          pointSize={6}
+          pointBorderWidth={3}
+          pointBorderColor={{ from: 'serieColor' }}
+          pointLabelYOffset={-12}
+          useMesh={true}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default ExpenseLineChart;
