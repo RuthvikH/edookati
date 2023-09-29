@@ -1,0 +1,44 @@
+WITH RankedProducts AS (
+    SELECT
+        p.name AS product_name,
+        pc.name AS category_name,
+        p.price,
+        ROW_NUMBER() OVER (ORDER BY p.price ASC) AS product_rank
+    FROM
+        product p
+    LEFT JOIN
+        product_category pc ON p.product_category_id = pc.id
+    WHERE
+        p.price BETWEEN (
+            SELECT
+                MIN(price)
+            FROM (
+                SELECT
+                    price
+                FROM
+                    product
+                ORDER BY
+                    price ASC
+                LIMIT 1 OFFSET 4
+            ) AS fifth_expensive
+            AND (
+                SELECT
+                    MAX(price)
+                FROM (
+                    SELECT
+                        price
+                    FROM
+                        product
+                    ORDER BY
+                        price ASC
+                    LIMIT 1 OFFSET 14
+                ) AS fifteenth_expensive
+        )
+)
+SELECT
+    COALESCE(category_name, product_name) AS product_category,
+    COALESCE(product_name, category_name) AS category_name
+FROM
+    RankedProducts
+ORDER BY
+    COALESCE(category_name, product_name);
