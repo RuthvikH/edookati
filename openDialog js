@@ -1,0 +1,19 @@
+
+  <sdf-button data-cvs-id="161" id="open-button">Open Modal</sdf-button>
+  <sdf-focus-pane data-cvs-id="162" dismiss-label="Reject" accept-label="Approve" closeable="" spacing="loose"
+    heading="Employee Report" id="demo-component">
+    <p data-cvs-id="522" class="text-body-02 m-0">Lorem ipsum dolor sit amet consectetur. Et convallis auctor leo
+      viverra
+      .</p>
+    <sdf-alert data-cvs-id="523" class="mt-4">Remove portal-enabled from the sdf-select-simple component to see how the
+      dropdown
+      gets
+      cut off without it.</sdf-alert>
+  </sdf-focus-pane>
+
+<script data-cvs-id="167">
+  document.querySelector('#open-button').addEventListener('click', () => document.querySelector('sdf-focus-pane').visible = true);
+  document.querySelector('sdf-focus-pane').addEventListener('sdfDismiss', (evt) => evt.currentTarget.visible = false);
+  document.querySelector('sdf-focus-pane').addEventListener('sdfAccept', (evt) => evt.currentTarget.visible = false);
+
+</script>
